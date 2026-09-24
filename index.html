@@ -1,0 +1,493 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Notion MCP Setup</title>
+<meta name="description" content="A step-by-step field guide to connecting Notion to Claude AI over the Model Context Protocol, remote connector and local server both, with gotchas and a fallback plan." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --void:#0a0b0c;
+    --panel:#0e0f11;
+    --panel-2:#131416;
+    --border:#26282b;
+    --border-dashed:#3a3d41;
+    --hairline:#1d1f22;
+    --bone:#f2f2f0;
+    --text-hi:#e7e7e5;
+    --text-mid:#a9abae;
+    --text-low:#7d8084;
+    --text-faint:#5f6266;
+    --signal:#ff4d00;
+    --signal-faint:rgba(255,77,0,.14);
+    --signal-line:rgba(255,77,0,.33);
+    --good:#3ecf8e;
+    --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+    --maxw: 760px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--text-hi);
+    font:16px/1.65 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    padding-left:16px;
+    padding-right:16px;
+  }
+  a{color:inherit}
+  img,svg{max-width:100%}
+  ::selection{background:var(--signal-line);color:var(--bone)}
+
+  /* ---------- top signal bar + masthead ---------- */
+  .signal-bar{height:3px;background:linear-gradient(90deg,var(--signal),transparent 70%)}
+  header.site{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:20px 0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--hairline);
+  }
+  .logo{
+    font:600 15px/1 var(--mono);
+    letter-spacing:.02em;
+    text-decoration:none;
+    color:var(--bone);
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+  .logo .br{color:var(--signal)}
+  .logo .dim{color:var(--text-low)}
+  .site-tag{
+    font:400 12px/1 var(--mono);
+    color:var(--text-low);
+    letter-spacing:.04em;
+  }
+
+  main{max-width:var(--maxw); margin:0 auto; padding-bottom:80px}
+
+  /* ---------- hero ---------- */
+  .kicker{
+    display:inline-block;
+    margin-top:36px;
+    font:600 12px/1 var(--mono);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--signal);
+    background:var(--signal-faint);
+    border:1px solid var(--signal-line);
+    padding:5px 10px;
+    border-radius:3px;
+  }
+  h1{
+    font:700 clamp(28px,5vw,42px)/1.18 var(--sans);
+    color:var(--bone);
+    margin:18px 0 0;
+    text-wrap:balance;
+    letter-spacing:-.01em;
+  }
+  .gist{
+    margin:22px 0 0;
+    border:1px solid var(--border);
+    border-left:3px solid var(--signal);
+    background:var(--panel);
+    padding:16px 18px;
+    border-radius:0 6px 6px 0;
+  }
+  .gist-k{
+    display:block;
+    font:600 11px/1 var(--mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--signal);
+    margin-bottom:8px;
+  }
+  .gist p{margin:0; color:var(--text-mid); font-size:15px}
+
+  .byline{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:26px 0 0;
+  }
+  .avatar{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font:600 13px/1 var(--mono);
+    color:var(--signal);
+    flex:none;
+  }
+  .who .name{font:600 14px/1.3 var(--sans); color:var(--bone)}
+  .who .role{font:400 12.5px/1.3 var(--mono); color:var(--text-low); margin-top:2px}
+
+  /* ---------- diagram ---------- */
+  .diagram{
+    margin:32px 0 0;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--panel);
+    padding:22px 18px 18px;
+  }
+  .diagram-cap{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font:400 12px/1 var(--mono); color:var(--text-low); margin-top:14px;
+  }
+
+  /* ---------- table of contents ---------- */
+  nav.toc{
+    margin:34px 0 0;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel);
+    padding:16px 18px 6px;
+  }
+  nav.toc h2{
+    font:600 11px/1 var(--mono);
+    letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-low); margin:0 0 12px;
+  }
+  nav.toc ol{margin:0; padding:0 0 12px; list-style:none; counter-reset:toc}
+  nav.toc li{counter-increment:toc; margin-bottom:9px}
+  nav.toc a{
+    text-decoration:none; color:var(--text-mid); font-size:14.5px;
+    display:flex; gap:10px;
+  }
+  nav.toc a:hover{color:var(--signal)}
+  nav.toc a::before{
+    content:counter(toc,decimal-leading-zero);
+    font:500 12px/1.5 var(--mono); color:var(--text-faint); flex:none;
+  }
+
+  /* ---------- article body typography ---------- */
+  .body{margin-top:8px}
+  .body p{color:var(--text-mid); font-size:16px; margin:18px 0}
+  .body ul, .body ol.plain{color:var(--text-mid); font-size:15.5px; padding-left:22px}
+  .body li{margin:8px 0}
+  .body strong{color:var(--text-hi); font-weight:600}
+  h2.section{
+    font:700 24px/1.3 var(--sans);
+    color:var(--bone);
+    margin:52px 0 6px;
+    padding-top:20px;
+    border-top:1px solid var(--hairline);
+    scroll-margin-top:20px;
+  }
+  h2.section .num{color:var(--signal); font:600 15px var(--mono); margin-right:10px}
+  h3{font:600 16px/1.4 var(--sans); color:var(--bone); margin:0 0 4px}
+
+  code{
+    font-family:var(--mono);
+    font-size:.88em;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    padding:1px 5px;
+    border-radius:4px;
+    color:var(--text-hi);
+  }
+  pre{
+    margin:14px 0;
+    background:#000;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 16px;
+    overflow-x:auto;
+  }
+  pre code{
+    background:none; border:none; padding:0;
+    color:#dcdcdc; font-size:13.5px; line-height:1.6;
+  }
+  pre .c{color:var(--text-faint)}
+  pre .k{color:var(--signal)}
+
+  /* ---------- steps ---------- */
+  ol.steps{list-style:none; margin:22px 0 0; padding:0; counter-reset:step}
+  ol.steps > li{
+    counter-increment:step;
+    position:relative;
+    padding:0 0 28px 46px;
+    border-left:1px solid var(--border-dashed);
+    margin-left:15px;
+  }
+  ol.steps > li:last-child{border-left-color:transparent; padding-bottom:4px}
+  ol.steps > li::before{
+    content:counter(step,decimal-leading-zero);
+    position:absolute; left:-15px; top:0;
+    width:30px; height:30px;
+    background:var(--void);
+    border:1px solid var(--signal-line);
+    color:var(--signal);
+    border-radius:50%;
+    font:600 12px/28px var(--mono);
+    text-align:center;
+  }
+  ol.steps h3{font-size:16.5px}
+  ol.steps p{margin:8px 0; color:var(--text-mid); font-size:15px}
+
+  .path-tag{
+    display:inline-block;
+    font:600 10.5px/1 var(--mono);
+    letter-spacing:.06em; text-transform:uppercase;
+    color:var(--bone);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    padding:4px 8px;
+    border-radius:4px;
+    margin-bottom:14px;
+  }
+  .path-tag.a{color:var(--signal); border-color:var(--signal-line)}
+
+  /* ---------- table ---------- */
+  .table-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--border); border-radius:8px}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:14px}
+  th,td{padding:11px 14px; border-bottom:1px solid var(--hairline); text-align:left; vertical-align:top}
+  th{
+    font:600 11px var(--mono); letter-spacing:.05em; text-transform:uppercase;
+    color:var(--text-low); background:var(--panel);
+  }
+  td{color:var(--text-mid)}
+  tr:last-child td{border-bottom:none}
+  td.yes{color:var(--good)}
+  td.no{color:var(--text-faint)}
+
+  /* ---------- gotchas ---------- */
+  .gotchas{list-style:none; margin:18px 0; padding:0; display:grid; gap:12px}
+  .gotchas li{
+    border:1px solid var(--border);
+    border-left:3px solid var(--border-dashed);
+    background:var(--panel);
+    padding:14px 16px;
+    border-radius:0 6px 6px 0;
+    font-size:14.5px;
+    color:var(--text-mid);
+  }
+  .gotchas li strong{color:var(--bone); display:block; margin-bottom:4px; font-size:15px}
+
+  /* ---------- faq ---------- */
+  .faq{margin:16px 0 0}
+  .faq details{border-top:1px solid var(--border); padding:15px 0}
+  .faq details:last-child{border-bottom:1px solid var(--border)}
+  .faq summary{
+    cursor:pointer; list-style:none;
+    font:600 15.5px/1.4 var(--sans); color:var(--bone);
+    display:flex; gap:10px; align-items:baseline;
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::before{content:"+"; color:var(--signal); font:600 16px var(--mono); flex:none}
+  .faq details[open] summary::before{content:"–"}
+  .faq p{color:var(--text-mid); font-size:14.5px; margin:10px 0 0 24px}
+
+  /* ---------- sources / footer ---------- */
+  .sources{
+    margin-top:44px; padding-top:20px; border-top:1px solid var(--hairline);
+  }
+  .sources h2{font:600 11px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-low); margin:0 0 14px}
+  .sources ul{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  .sources li{font-size:14px; color:var(--text-mid); display:flex; gap:8px; flex-wrap:wrap}
+  .sources a{color:var(--text-hi); text-decoration:none; border-bottom:1px dotted var(--border-dashed)}
+  .sources a:hover{color:var(--signal); border-color:var(--signal)}
+  .src-t{font:500 10.5px var(--mono); color:var(--signal); text-transform:uppercase; letter-spacing:.05em; flex:none; padding-top:2px}
+
+  footer.foot{
+    max-width:var(--maxw); margin:0 auto; padding:30px 0 50px;
+    font:400 12.5px var(--mono); color:var(--text-faint);
+    text-align:center;
+  }
+
+  @media (max-width:520px){
+    h1{font-size:26px}
+    .byline{flex-wrap:wrap}
+    ol.steps > li{padding-left:38px; margin-left:12px}
+    ol.steps > li::before{width:26px;height:26px;font-size:11px;line-height:24px;left:-13px}
+  }
+</style>
+
+<div class="signal-bar"></div>
+<header class="site">
+  <a class="logo" href="#top"><span class="br">&lt;</span>mcp<span class="dim">.</span>field<span class="br">/</span>guide<span class="br">&gt;</span></a>
+  <span class="site-tag">// integrations desk</span>
+</header>
+
+<main>
+  <a id="top"></a>
+  <span class="kicker">Tutorials · Integrations</span>
+  <h1>Connect Notion to Claude AI with the MCP</h1>
+
+  <div class="gist">
+    <span class="gist-k">The gist</span>
+    <p>Notion runs an official remote MCP server that plugs straight into Claude as a Connector, so Claude can read, search, create and edit pages in your workspace without you copying anything by hand. Most people should use the point-and-click OAuth connector below; a local, token-based server is there for setups that need it. Either way, Claude only ever sees the pages you explicitly share with it.</p>
+  </div>
+
+  <div class="byline">
+    <div class="avatar">MC</div>
+    <div class="who">
+      <div class="name">Integrations Desk</div>
+      <div class="role">Field guide · updated 2026-09-24 · 9 min read</div>
+    </div>
+  </div>
+
+  <figure class="diagram" aria-label="Diagram: Claude, MCP, and Notion">
+    <svg viewBox="0 0 680 190" role="img" aria-labelledby="dgt dgd" xmlns="http://www.w3.org/2000/svg">
+      <title id="dgt">How Claude talks to Notion over MCP</title>
+      <desc id="dgd">Claude sends a request to an MCP client, which calls Notion's MCP server over your authorized connection, which reads or writes the shared pages and databases, and the result flows back to Claude.</desc>
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0L10,5L0,10z" fill="#ff4d00"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#a9abae">
+        <rect x="14" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#26282b"/>
+        <text x="84" y="86" text-anchor="middle" fill="#f2f2f0" font-weight="600">Claude</text>
+        <text x="84" y="104" text-anchor="middle" fill="#7d8084">chat / desktop</text>
+
+        <rect x="270" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#ff4d00" stroke-opacity=".5"/>
+        <text x="340" y="82" text-anchor="middle" fill="#f2f2f0" font-weight="600">MCP</text>
+        <text x="340" y="98" text-anchor="middle" fill="#7d8084">notion.mcp</text>
+        <text x="340" y="113" text-anchor="middle" fill="#7d8084">connector</text>
+
+        <rect x="526" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#26282b"/>
+        <text x="596" y="86" text-anchor="middle" fill="#f2f2f0" font-weight="600">Notion</text>
+        <text x="596" y="104" text-anchor="middle" fill="#7d8084">shared pages</text>
+
+        <line x1="154" y1="92" x2="264" y2="92" stroke="#ff4d00" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="410" y1="92" x2="520" y2="92" stroke="#ff4d00" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <text x="209" y="80" text-anchor="middle" fill="#7d8084" font-size="10">tool call</text>
+        <text x="465" y="80" text-anchor="middle" fill="#7d8084" font-size="10">OAuth token</text>
+      </g>
+    </svg>
+    <div class="diagram-cap">
+      <span>Claude → MCP connector → Notion workspace</span>
+      <span>only shared pages are reachable</span>
+    </div>
+  </figure>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#prereqs">Before you start</a></li>
+      <li><a href="#connector">Connect Notion to Claude</a></li>
+      <li><a href="#verify">Confirm the connection works</a></li>
+      <li><a href="#use">Things to actually ask Claude to do</a></li>
+      <li><a href="#compare">How this compares to other ways to link Notion</a></li>
+      <li><a href="#gotchas">Gotchas before you rely on it</a></li>
+      <li><a href="#faq">Quick answers</a></li>
+    </ol>
+  </nav>
+
+  <div class="body">
+    <p>MCP, the Model Context Protocol, is the open standard Anthropic ships Claude with for talking to outside tools and data sources in a structured way instead of a pasted screenshot or a copy-pasted export. Notion publishes its own MCP server for exactly this: once connected, Claude can search your workspace, open a page, read a database, and — if you allow it — create pages, add comments and update properties, all inside the same chat you're already using.</p>
+    <ul>
+      <li><strong>No export, no copy-paste.</strong> Claude reads live Notion content and can write back to it, instead of working from a stale dump you pasted in.</li>
+      <li><strong>Scoped by page, not by workspace.</strong> Connecting the integration doesn't hand over everything — Claude can only reach pages and databases you've explicitly shared with it.</li>
+      <li><strong>Two ways to wire it up.</strong> A remote OAuth connector for Claude.ai and Claude Desktop that needs no code, and a local server for setups that run their own MCP client or need on-machine control.</li>
+      <li><strong>Works both directions.</strong> Ask Claude to summarize a doc, or ask it to draft a new page, log a meeting note, or update a status field, and it lands back in Notion.</li>
+    </ul>
+
+    <h2 class="section" id="prereqs"><span class="num">01</span>Before you start</h2>
+    <p>Two things need to be true before the connector will work at all:</p>
+    <ul>
+      <li>A <strong>Claude.ai plan that supports Connectors</strong> (Pro, Max, Team or Enterprise), or a current build of <strong>Claude Desktop</strong> — the free web tier does not expose the Connectors settings panel.</li>
+      <li><strong>Edit or admin access</strong> to the Notion workspace you want to connect, since sharing a page with the integration requires the same permission as sharing it with a person.</li>
+    </ul>
+    <h2 class="section" id="connector"><span class="num">02</span>Connect Notion to Claude</h2>
+    <span class="path-tag a">No code · OAuth · 2 minutes</span>
+    <p>This is the built-in, point-and-click path. It runs on Notion's own hosted MCP server, so there's nothing to install and no token to manage yourself.</p>
+    <ol class="steps">
+      <li>
+        <h3>Step 1. Open Connectors in Claude's settings.</h3>
+        <p>In Claude.ai, click your profile icon → <strong>Settings → Connectors</strong>. In Claude Desktop, it's the same path from the app menu. You'll see a list of first-party connectors including Notion, Google Drive, and GitHub.</p>
+      </li>
+      <li>
+        <h3>Step 2. Add Notion and sign in.</h3>
+        <p>Click <strong>Add</strong> (or <strong>Connect</strong>) next to Notion. A popup opens Notion's own login and OAuth consent screen — you're authenticating directly with Notion, not handing Claude a password.</p>
+        <pre><code><span class="c"># nothing to type here — this step is entirely a browser popup</span>
+Settings → Connectors → Notion → Connect</code></pre>
+      </li>
+      <li>
+        <h3>Step 3. Choose which pages Claude can see.</h3>
+        <p>Notion's consent screen lists your pages and databases with toggles. Turn on the ones you want Claude to read or edit — a whole workspace, a single project space, or just one database. You can come back and add more later from Notion's own <strong>Settings → Connections</strong> panel.</p>
+      </li>
+      <li>
+        <h3>Step 4. Confirm and return to Claude.</h3>
+        <p>Click <strong>Select pages</strong> then <strong>Allow access</strong>. The popup closes and Notion shows up as <strong>Connected</strong> back in Claude's Connectors list, with a toggle to turn it on or off per-conversation.</p>
+      </li>
+    </ol>
+
+    <h2 class="section" id="verify"><span class="num">03</span>Confirm the connection works</h2>
+    <p>Test it in a fresh conversation before trusting it with real work:</p>
+    <ul>
+      <li>Click the <strong>tools icon</strong> in the message box (a plug or slider icon depending on platform) and confirm Notion shows tools like <code>search</code>, <code>fetch</code>, or <code>notion-create-pages</code>.</li>
+      <li>Ask directly: <em>"Search my Notion for pages about onboarding."</em> Claude should call the tool and return real page titles, not a generic answer.</li>
+      <li>If nothing appears, re-check that at least one page is actually shared with the integration — an empty share list is the single most common cause of "it says connected but finds nothing."</li>
+    </ul>
+
+    <h2 class="section" id="use"><span class="num">04</span>Things to actually ask Claude to do</h2>
+    <p>Once it's live, the connector is most useful for the back-and-forth work that used to mean tab-switching:</p>
+    <ul>
+      <li><strong>"Summarize the Q3 roadmap page and list what's overdue."</strong> — pulls the live page instead of a stale export.</li>
+      <li><strong>"Turn these meeting notes into a Notion page under Team Docs."</strong> — paste rough notes in chat, Claude formats and creates the page.</li>
+      <li><strong>"Update the status column to Done for the tasks I just described."</strong> — edits database properties directly, if you granted write access.</li>
+      <li><strong>"Compare what's in my Notion CRM against this list of leads."</strong> — cross-references a shared database against pasted or uploaded data.</li>
+    </ul>
+
+    <h2 class="section" id="compare"><span class="num">05</span>How this compares to other ways to link Notion</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Setup</th><th>Live read/write</th><th>Needs code</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Notion MCP connector</td><td>~2 minutes, OAuth</td><td class="yes">Yes, both ways</td><td class="no">No</td></tr>
+          <tr><td>Zapier / Make automation</td><td>Per-automation setup</td><td>One-way triggers, not conversational</td><td class="no">No</td></tr>
+          <tr><td>Manual copy-paste export</td><td>None</td><td class="no">No, always stale</td><td class="no">No</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section" id="gotchas"><span class="num">06</span>Gotchas before you rely on it</h2>
+    <ul class="gotchas">
+      <li><strong>Access is opt-in per page, not per workspace.</strong> Connecting the integration grants nothing on its own — Claude only reaches what you or a teammate has explicitly shared, exactly like sharing with a guest.</li>
+      <li><strong>Write access is a separate decision from read access.</strong> Some workspace admins intentionally share pages read-only; check a database's connection settings if Claude reports it can't edit something you expected it to.</li>
+      <li><strong>Large databases get summarized, not dumped.</strong> Very large pages or databases may come back trimmed or paginated rather than pasted in full — ask Claude to filter or query a specific view instead of "give me everything."</li>
+    </ul>
+
+    <h2 class="section" id="faq"><span class="num">07</span>Quick answers</h2>
+    <div class="faq">
+      <details>
+        <summary>Do I need the Notion desktop or web app open for this to work?</summary>
+        <p>No. The remote connector talks to Notion's servers directly over the OAuth connection, and the local server talks to Notion's API over your integration token — neither depends on the Notion app being open on your machine.</p>
+      </details>
+      <details>
+        <summary>Can I connect more than one Notion workspace?</summary>
+        <p>Only one Notion connection is active per Claude account at a time through the connector. To switch workspaces, disconnect from Claude's Connectors settings and reconnect with the other workspace's OAuth login.</p>
+      </details>
+      <details>
+        <summary>Will Claude see private pages I haven't shared?</summary>
+        <p>No. The connector is bound by Notion's own sharing model — a page that isn't shared with it is invisible to every tool call, regardless of what you ask Claude to search for.</p>
+      </details>
+      <details>
+        <summary>What's the difference between this and Notion's built-in AI features?</summary>
+        <p>Notion AI runs inside Notion on Notion's own models. The MCP connector runs the other direction — it lets Claude, wherever you're chatting with it, reach into Notion as a tool, which matters if Claude is already where you plan, code or write.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="sources">
+    <h2>Primary sources</h2>
+    <ul>
+      <li><span class="src-t">Official</span> <a href="https://developers.notion.com/docs/mcp" target="_blank" rel="noopener">developers.notion.com/docs/mcp</a> — Notion's own MCP server documentation.</li>
+      <li><span class="src-t">Official</span> <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a> — the open MCP specification.</li>
+      <li><span class="src-t">Official</span> <a href="https://docs.claude.com" target="_blank" rel="noopener">docs.claude.com</a> — Claude Desktop and Connectors setup documentation.</li>
+    </ul>
+  </div>
+</main>
+
+<footer class="foot">// field guide for connecting tools to Claude</footer>
+
+</body></html>
