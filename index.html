@@ -63,9 +63,33 @@
   .logo .br{color:var(--signal)}
   .logo .dim{color:var(--text-low)}
   .site-tag{
-    font:400 12px/1 var(--mono);
-    color:var(--text-low);
+    font:400 11px/1 var(--mono);
+    color:var(--text-faint);
     letter-spacing:.04em;
+  }
+  .site-meta{
+    display:flex; flex-direction:column; align-items:flex-end; gap:5px;
+  }
+  .site-author-row{
+    display:flex; align-items:center; gap:8px;
+  }
+  .site-author-badge{
+    width:22px; height:22px; border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid var(--signal-line);
+    display:flex; align-items:center; justify-content:center;
+    font:700 8.5px/1 var(--mono);
+    color:var(--signal);
+    flex:none;
+  }
+  .site-author{
+    font:700 12px/1 var(--mono);
+    color:var(--signal);
+    letter-spacing:.03em;
+  }
+  @media (max-width:520px){
+    .site-meta{align-items:flex-end}
+    .site-tag{display:none}
   }
 
   main{max-width:var(--maxw); margin:0 auto; padding-bottom:80px}
@@ -350,6 +374,67 @@
     color:var(--text-low);
   }
 
+  /* ---------- intro highlight panel ---------- */
+  .intro-panel{
+    border:1px solid var(--border);
+    background:var(--panel);
+    border-radius:12px;
+    padding:22px 22px 20px;
+    margin:26px 0 0;
+  }
+  .intro-panel > p:first-child{margin-top:0}
+  .intro-panel ul{
+    list-style:none; padding:0; margin:18px 0 0;
+    display:grid; gap:13px;
+  }
+  .intro-panel li{
+    display:flex; gap:11px; align-items:flex-start;
+    color:var(--text-mid); font-size:15px; margin:0;
+  }
+  .intro-panel li::before{
+    content:'▸'; color:var(--signal); font-weight:700;
+    flex:none; line-height:1.5; margin-top:1px;
+  }
+
+  /* ---------- floating jump cta ---------- */
+  .jump-cta{
+    position:fixed;
+    right:18px; bottom:22px;
+    z-index:80;
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--signal);
+    color:var(--void);
+    font:700 13px/1.3 var(--sans);
+    padding:13px 18px;
+    border-radius:999px;
+    text-decoration:none;
+    max-width:200px;
+    box-shadow:0 10px 28px rgba(255,77,0,.4);
+    animation:jump-cta-bounce 2.4s ease-in-out infinite;
+  }
+  .jump-cta .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--void);
+    flex:none;
+    animation:jump-cta-pulse 1.6s ease-in-out infinite;
+  }
+  .jump-cta svg{flex:none}
+  @keyframes jump-cta-bounce{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+  }
+  @keyframes jump-cta-pulse{
+    0%,100%{opacity:1}
+    50%{opacity:.3}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .jump-cta{animation:none}
+    .jump-cta .dot{animation:none}
+  }
+  @media (max-width:520px){
+    .jump-cta{right:14px; bottom:16px; padding:11px 15px; font-size:12px; max-width:150px}
+  }
+
   @media (max-width:520px){
     h1{font-size:26px}
     .byline{flex-wrap:wrap}
@@ -361,7 +446,13 @@
 <div class="signal-bar"></div>
 <header class="site">
   <a class="logo" href="#top"><span class="br">&lt;</span>mcp<span class="dim">.</span>field<span class="br">/</span>guide<span class="br">&gt;</span></a>
-  <span class="site-tag">// integrations desk</span>
+  <div class="site-meta">
+    <div class="site-author-row">
+      <span class="site-author-badge">ANC</span>
+      <span class="site-author">Author: Strategy &amp; Planning Dept. | ACI Edulink</span>
+    </div>
+    <span class="site-tag">// integrations desk</span>
+  </div>
 </header>
 
 <main>
@@ -375,7 +466,6 @@
   </div>
 
   <div class="byline">
-    <div class="avatar">MC</div>
     <div class="who">
       <div class="name">Integrations Desk</div>
       <div class="role">Field guide · updated 2026-09-24 · 9 min read</div>
@@ -432,13 +522,15 @@
   </nav>
 
   <div class="body">
-    <p>MCP, the Model Context Protocol, is the open standard Anthropic ships Claude with for talking to outside tools and data sources in a structured way instead of a pasted screenshot or a copy-pasted export. Notion publishes its own MCP server for exactly this: once connected, Claude can search your workspace, open a page, read a database, and — if you allow it — create pages, add comments and update properties, all inside the same chat you're already using.</p>
-    <ul>
-      <li><strong>No export, no copy-paste.</strong> Claude reads live Notion content and can write back to it, instead of working from a stale dump you pasted in.</li>
-      <li><strong>Scoped by page, not by workspace.</strong> Connecting the integration doesn't hand over everything — Claude can only reach pages and databases you've explicitly shared with it.</li>
-      <li><strong>Two ways to wire it up.</strong> A remote OAuth connector for Claude.ai and Claude Desktop that needs no code, and a local server for setups that run their own MCP client or need on-machine control.</li>
-      <li><strong>Works both directions.</strong> Ask Claude to summarize a doc, or ask it to draft a new page, log a meeting note, or update a status field, and it lands back in Notion.</li>
-    </ul>
+    <div class="intro-panel">
+      <p>MCP is the open standard that lets Claude talk to outside tools. Notion's MCP server plugs into it, so once connected, Claude can search, read and — if allowed — edit your workspace, right inside the chat.</p>
+      <ul>
+        <li><strong>No copy-paste.</strong> Claude reads and writes live Notion content.</li>
+        <li><strong>Scoped by page.</strong> Only pages you've explicitly shared are reachable.</li>
+        <li><strong>Two setups.</strong> A no-code OAuth connector, or a local server for on-machine control.</li>
+        <li><strong>Two-way.</strong> Summarize, draft, or update Notion pages straight from chat.</li>
+      </ul>
+    </div>
 
     <h2 class="section" id="prereqs"><span class="num">01</span>Before you start</h2>
     <p>Two things need to be true before the connector will work at all:</p>
@@ -540,8 +632,8 @@ Settings → Connectors → Notion → Connect</code></pre>
 
   <div class="cta-box">
     <span class="kicker">Stay in the loop</span>
-    <h2>Get Notion + Claude tips in your inbox</h2>
-    <p>Sign up and we'll send bite-sized MCP setup tips and new integration guides as they land, no fluff.</p>
+    <h2 id="signup">Get Trending AI Tips in Your Mailbox</h2>
+    <p>Sign up and we'll send bite-sized MCP setup tips, trending AI workflows and new integration guides as they land, no fluff.</p>
     <a class="cta-btn" href="https://app.notion.com/p/c4470ef25a8c47f08aca569229f6c2b8?v=181a93e7b4a04b8c89f2a8be4aa8660b&source=copy_link" target="_blank" rel="noopener">
       Sign up now!
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -549,6 +641,12 @@ Settings → Connectors → Notion → Connect</code></pre>
     <p class="cta-note">Takes 30 seconds · No spam</p>
   </div>
 </main>
+
+<a class="jump-cta" href="https://app.notion.com/p/c4470ef25a8c47f08aca569229f6c2b8?v=181a93e7b4a04b8c89f2a8be4aa8660b&source=copy_link" target="_blank" rel="noopener" aria-label="Sign up to get trending AI tips in your mailbox">
+  <span class="dot"></span>
+  Get Trending AI Tips
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+</a>
 
 <footer class="foot">// field guide for connecting tools to Claude</footer>
 
