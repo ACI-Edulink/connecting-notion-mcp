@@ -1,4 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Notion MCP Setup</title>
 <meta name="description" content="A step-by-step field guide to connecting Notion to Claude AI over the Model Context Protocol, remote connector and local server both, with gotchas and a fallback plan." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,12 +79,14 @@
     display:flex; align-items:center; gap:8px;
   }
   .site-author-badge{
-    width:22px; height:22px; border-radius:50%;
-    background:var(--panel-2);
-    border:1px solid var(--signal-line);
+    width:28px; height:28px; border-radius:50%;
+    background:var(--signal);
+    border:1px solid var(--signal);
+    box-shadow:0 0 0 3px var(--signal-faint);
     display:flex; align-items:center; justify-content:center;
-    font:700 8.5px/1 var(--mono);
-    color:var(--signal);
+    font:700 10px/1 var(--mono);
+    letter-spacing:.02em;
+    color:var(--void);
     flex:none;
   }
   .site-author{
@@ -90,6 +97,7 @@
   @media (max-width:520px){
     .site-meta{align-items:flex-end}
     .site-tag{display:none}
+    .site-author{line-height:1.35}
   }
 
   main{max-width:var(--maxw); margin:0 auto; padding-bottom:80px}
@@ -158,9 +166,20 @@
     background:var(--panel);
     padding:22px 18px 18px;
   }
+  .diagram svg{display:block; width:100%; height:auto}
+  .diagram .dg-mobile{display:none}
   .diagram-cap{
-    display:flex; justify-content:space-between; align-items:baseline;
-    font:400 12px/1 var(--mono); color:var(--text-low); margin-top:14px;
+    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    font:400 12px/1.4 var(--mono); color:var(--text-low); margin-top:14px;
+  }
+  .diagram-cap .legend{display:inline-flex; align-items:center; gap:14px}
+  .diagram-cap .sw{display:inline-block; width:18px; height:0; border-top:1.5px solid var(--signal); vertical-align:middle; margin-right:6px}
+  .diagram-cap .sw.back{border-top-style:dashed; border-top-color:var(--text-low)}
+  @media (max-width:520px){
+    .diagram{padding:20px 14px 16px}
+    .diagram .dg-desktop{display:none}
+    .diagram .dg-mobile{display:block; max-width:340px; margin:0 auto}
+    .diagram-cap{flex-direction:column; align-items:center; text-align:center; gap:8px; margin-top:16px; font-size:12.5px}
   }
 
   /* ---------- table of contents ---------- */
@@ -442,6 +461,8 @@
     ol.steps > li::before{width:26px;height:26px;font-size:11px;line-height:24px;left:-13px}
   }
 </style>
+</head>
+<body>
 
 <div class="signal-bar"></div>
 <header class="site">
@@ -472,37 +493,87 @@
   </div>
 
   <figure class="diagram" aria-label="Diagram: Claude, MCP, and Notion">
-    <svg viewBox="0 0 680 190" role="img" aria-labelledby="dgt dgd" xmlns="http://www.w3.org/2000/svg">
+    <!-- Desktop / tablet: left-to-right flow -->
+    <svg class="dg-desktop" viewBox="0 0 680 144" role="img" aria-labelledby="dgt dgd" xmlns="http://www.w3.org/2000/svg">
       <title id="dgt">How Claude talks to Notion over MCP</title>
-      <desc id="dgd">Claude sends a request to an MCP client, which calls Notion's MCP server over your authorized connection, which reads or writes the shared pages and databases, and the result flows back to Claude.</desc>
+      <desc id="dgd">Claude sends a tool call to the Notion MCP connector, which uses your OAuth token to reach the Notion pages you shared. Results flow back the same way to Claude.</desc>
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0L10,5L0,10z" fill="#ff4d00"/>
         </marker>
+        <marker id="arrow-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0L10,5L0,10z" fill="#7d8084"/>
+        </marker>
       </defs>
-      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#a9abae">
-        <rect x="14" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#26282b"/>
-        <text x="84" y="86" text-anchor="middle" fill="#f2f2f0" font-weight="600">Claude</text>
-        <text x="84" y="104" text-anchor="middle" fill="#7d8084">chat / desktop</text>
+      <g font-family="IBM Plex Mono, monospace" fill="#a9abae">
+        <rect x="8" y="26" width="146" height="88" rx="10" fill="#131416" stroke="#3a3d41"/>
+        <text x="81" y="64" text-anchor="middle" fill="#f2f2f0" font-size="16" font-weight="600">Claude</text>
+        <text x="81" y="86" text-anchor="middle" fill="#a9abae" font-size="12.5">chat / desktop</text>
 
-        <rect x="270" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#ff4d00" stroke-opacity=".5"/>
-        <text x="340" y="82" text-anchor="middle" fill="#f2f2f0" font-weight="600">MCP</text>
-        <text x="340" y="98" text-anchor="middle" fill="#7d8084">notion.mcp</text>
-        <text x="340" y="113" text-anchor="middle" fill="#7d8084">connector</text>
+        <rect x="267" y="26" width="146" height="88" rx="10" fill="#1a1210" stroke="#ff4d00" stroke-opacity=".75"/>
+        <text x="340" y="58" text-anchor="middle" fill="#ff4d00" font-size="16" font-weight="600">MCP</text>
+        <text x="340" y="80" text-anchor="middle" fill="#a9abae" font-size="12.5">notion.mcp</text>
+        <text x="340" y="96" text-anchor="middle" fill="#a9abae" font-size="12.5">connector</text>
 
-        <rect x="526" y="60" width="140" height="64" rx="8" fill="#131416" stroke="#26282b"/>
-        <text x="596" y="86" text-anchor="middle" fill="#f2f2f0" font-weight="600">Notion</text>
-        <text x="596" y="104" text-anchor="middle" fill="#7d8084">shared pages</text>
+        <rect x="526" y="26" width="146" height="88" rx="10" fill="#131416" stroke="#3a3d41"/>
+        <text x="599" y="64" text-anchor="middle" fill="#f2f2f0" font-size="16" font-weight="600">Notion</text>
+        <text x="599" y="86" text-anchor="middle" fill="#a9abae" font-size="12.5">shared pages</text>
 
-        <line x1="154" y1="92" x2="264" y2="92" stroke="#ff4d00" stroke-width="1.5" marker-end="url(#arrow)"/>
-        <line x1="410" y1="92" x2="520" y2="92" stroke="#ff4d00" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- requests -->
+        <line x1="156" y1="58" x2="262" y2="58" stroke="#ff4d00" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="415" y1="58" x2="521" y2="58" stroke="#ff4d00" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="210" y="48" text-anchor="middle" fill="#e7e7e5" font-size="11.5">tool call</text>
+        <text x="469" y="48" text-anchor="middle" fill="#e7e7e5" font-size="11.5">OAuth token</text>
 
-        <text x="209" y="80" text-anchor="middle" fill="#7d8084" font-size="10">tool call</text>
-        <text x="465" y="80" text-anchor="middle" fill="#7d8084" font-size="10">OAuth token</text>
+        <!-- results -->
+        <line x1="263" y1="86" x2="159" y2="86" stroke="#7d8084" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-back)"/>
+        <line x1="522" y1="86" x2="418" y2="86" stroke="#7d8084" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-back)"/>
+        <text x="210" y="104" text-anchor="middle" fill="#7d8084" font-size="11">results</text>
+        <text x="469" y="104" text-anchor="middle" fill="#7d8084" font-size="11">page data</text>
       </g>
     </svg>
+
+    <!-- Mobile: top-to-bottom flow -->
+    <svg class="dg-mobile" viewBox="0 0 320 400" role="img" aria-labelledby="dgmt dgmd" xmlns="http://www.w3.org/2000/svg">
+      <title id="dgmt">How Claude talks to Notion over MCP</title>
+      <desc id="dgmd">Claude sends a tool call to the Notion MCP connector, which uses your OAuth token to reach the Notion pages you shared. Results flow back the same way to Claude.</desc>
+      <defs>
+        <marker id="arrow-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0L10,5L0,10z" fill="#ff4d00"/>
+        </marker>
+        <marker id="arrow-m-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0L10,5L0,10z" fill="#7d8084"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" fill="#a9abae">
+        <rect x="30" y="6" width="260" height="78" rx="12" fill="#131416" stroke="#3a3d41"/>
+        <text x="160" y="40" text-anchor="middle" fill="#f2f2f0" font-size="18" font-weight="600">Claude</text>
+        <text x="160" y="64" text-anchor="middle" fill="#a9abae" font-size="14">chat / desktop</text>
+
+        <rect x="30" y="161" width="260" height="78" rx="12" fill="#1a1210" stroke="#ff4d00" stroke-opacity=".75"/>
+        <text x="160" y="195" text-anchor="middle" fill="#ff4d00" font-size="18" font-weight="600">MCP</text>
+        <text x="160" y="219" text-anchor="middle" fill="#a9abae" font-size="14">notion.mcp connector</text>
+
+        <rect x="30" y="316" width="260" height="78" rx="12" fill="#131416" stroke="#3a3d41"/>
+        <text x="160" y="350" text-anchor="middle" fill="#f2f2f0" font-size="18" font-weight="600">Notion</text>
+        <text x="160" y="374" text-anchor="middle" fill="#a9abae" font-size="14">shared pages</text>
+
+        <!-- requests (down) -->
+        <line x1="130" y1="86" x2="130" y2="156" stroke="#ff4d00" stroke-width="2" marker-end="url(#arrow-m)"/>
+        <line x1="130" y1="241" x2="130" y2="311" stroke="#ff4d00" stroke-width="2" marker-end="url(#arrow-m)"/>
+        <text x="120" y="127" text-anchor="end" fill="#e7e7e5" font-size="13">tool call</text>
+        <text x="120" y="282" text-anchor="end" fill="#e7e7e5" font-size="13">OAuth token</text>
+
+        <!-- results (up) -->
+        <line x1="190" y1="159" x2="190" y2="90" stroke="#7d8084" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-m-back)"/>
+        <line x1="190" y1="314" x2="190" y2="245" stroke="#7d8084" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-m-back)"/>
+        <text x="200" y="127" fill="#7d8084" font-size="12.5">results</text>
+        <text x="200" y="282" fill="#7d8084" font-size="12.5">page data</text>
+      </g>
+    </svg>
+
     <div class="diagram-cap">
-      <span>Claude → MCP connector → Notion workspace</span>
+      <span class="legend"><span><span class="sw"></span>request</span><span><span class="sw back"></span>response</span></span>
       <span>only shared pages are reachable</span>
     </div>
   </figure>
@@ -648,5 +719,8 @@ Settings → Connectors → Notion → Connect</code></pre>
 </a>
 
 <footer class="foot">// field guide for connecting tools to Claude</footer>
+
+</body>
+</html>
 
 </body></html>
